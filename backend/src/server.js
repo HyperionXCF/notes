@@ -15,9 +15,11 @@ app.use("/api/notes", notesRoutes)
 
 
 const PORT = process.env.PORT
-app.listen(PORT, ()=>{ 
-    // first connect to the database 
-    connectDB()
-    // then start listening
-    console.log(`server started on port ${PORT}`)
+
+// first connect to the database 
+connectDB().then(() => {
+    app.listen(PORT, ()=>{ 
+        // then start listening requests
+        console.log(`server started on port ${PORT}`)
+    })
 })
