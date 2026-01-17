@@ -6,6 +6,7 @@
 - Express
 - React.js
 - Node.js
+- Redis 
 
 # reflections
 - learning traditional fullstack app development with MERN 
