@@ -1,4 +1,4 @@
-import rateLimit from "../configs/upstash"
+import rateLimit from "../configs/upstash.js"
 
 const rateLimiter = async (_, res, next) => {
     try{
