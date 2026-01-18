@@ -1,92 +1,136 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router";
-import { api } from "../lib/axios.js";
 import toast, { LoaderIcon } from "react-hot-toast";
-import { Link } from "react-router";
-import { ArrowLeftIcon } from "lucide-react";
+import { api } from "../lib/axios.js";
+import { Link, useNavigate, useParams } from "react-router";
 
-export default function NoteDetailpage() {
+export default function NoteDetailPage() {
   const [note, setNote] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [isBeingEdited, setIsBeingEdited] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const navigate = useNavigate();
-
   const { id } = useParams();
 
-  useEffect(() => {
-    const fetchNote = async (id) => {
-      try {
-        const res = await api.get(`/notes/${id}`);
-        setNote(res.data);
-      } catch (err) {
-        toast.error("failed to fetch the note");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchNote(id);
-  }, [id]);
-
   const handleDelete = async () => {
+    const confirm = window.confirm(
+      "Are you sure you want to delete this note?",
+    );
+    if (!confirm) return;
+
     try {
       await api.delete(`/notes/${id}`);
       toast.success("Note deleted successfully");
       navigate("/");
     } catch (err) {
-      toast.error("Failed to delete the note");
+      toast.error("Failed to delete note");
+      console.log(err);
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (loading) {
+  const handleSave = async () => {
+    if(!note.title || !note.content){
+      toast.error("Title and content cannot be empty");
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.put(`/notes/${id}`, note);
+      toast.success("Note updated successfully");
+      navigate(`/`)
+    } catch (err) {
+      toast.error("Failed to update note");
+      console.log(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  console.log({ id });
+
+  useEffect(() => {
+    const fetchNote = async () => {
+      try {
+        const res = await api.get(`/notes/${id}`);
+        setNote(res.data);
+      } catch (err) {
+        toast.error("Failed to fetch note");
+        console.log(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchNote();
+  }, [id]);
+
+  console.log(note);
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-base-200 flex items-center justify-center">
-        <LoaderIcon className="animate-spin size-10" />
+      <div className="min-h-screen flex justify-center items-center">
+        <LoaderIcon size={20} className="animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-base-200">
+    <div className="min-h-screen bg-base-200 ">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <Link to={"/"} className="flex gap-2 items-center btn btn-outline">
-            <ArrowLeftIcon className="size-4" />
-            Back to Notes
-          </Link>
-          <div className="flex gap-3">
-            <button className="btn btn-primary" onClick={() => setIsBeingEdited((prev) => !prev)}>Edit Note</button>
-            <button onClick={handleDelete} className="btn btn-error">
-              Delete Note
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <Link to={"/"} className="btn btn-outline">
+              back to notes
+            </Link>
+            <button className="btn btn-error" onClick={handleDelete}>
+              delete note
             </button>
           </div>
-        </div>
 
-        <div className="flex items-center justify-center">
-        {isBeingEdited ? <NoteEditForm note={note}/> : <NoteReadForm note={note}/> }
+          <div className="card bg-base-100">
+            <div className="card-body min-w-2xl">
+              <div className="flex flex-col items-center">
+                <div className="form-control mb-4 flex flex-col">
+                  <label className="label-text">Title</label>
+                  <input
+                    type="text"
+                    placeholder="Note Title"
+                    className="input input-bordered min-w-xl"
+                    value={note.title}
+                    onChange={(e) => {
+                      setNote({ ...note, title: e.target.value });
+                    }}
+                  />
+                </div>
+
+                <div className="form-control mb-4 flex flex-col">
+                  <label className="label">
+                    <span className="label-text">Content</span>
+                  </label>
+                  <textarea
+                    placeholder={"write your note here..."}
+                    className="textarea textarea-bordered h-32 min-w-xl"
+                    value={note.content}
+                    onChange={(e) =>
+                      setNote({ ...note, content: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="card-actions justify-end">
+                <button
+                  className="btn btn-primary"
+                  disabled={saving}
+                  onClick={handleSave}
+                >
+                  {saving ? "saving..." : "save changes"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
-}
-
-function NoteReadForm({note}){
-  return(
-        <div className="mt-12 bg-base-200 p-6 rounded-lg">
-          <p className="text-2xl">{note.title}</p>
-          <p className="mt-6">{note.content}</p>
-        </div>
-  )
-}
-
-function NoteEditForm({note}){
-
-  return(
-        <div className="mt-12 bg-base-200 p-6 rounded-lg flex flex-col">
-          <form>
-            <input type="text" defaultValue={note.title} className="text-2xl min-w-2xl" />
-            <input type="text" defaultValue={note.content} className="min-w-2xl mt-6 textarea"/>
-          </form>
-        </div>
-  )
 }
