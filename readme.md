@@ -11,3 +11,7 @@
 # reflections
 - learning traditional fullstack app development with MERN 
 - used Next.js for shipping fullstack applications earlier, DX is 9/10 for me.
+
+# todos
+- implement authentication
+- host on cloudflare
